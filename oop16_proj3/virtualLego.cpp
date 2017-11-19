@@ -102,8 +102,8 @@ public:
     bool hasIntersected(CSphere& ball) 
 	{
 		D3DXVECTOR3 moving = ball.getCenter();
-
-		if (sqrt(pow(abs(this->center_x - moving.x), 2) + pow(abs(this->center_z - moving.z), 2)) <= 2 * M_RADIUS)
+		
+		if (sqrt(pow(this->center_x - moving.x, 2) + pow(this->center_z - moving.z, 2)) <= 2 * M_RADIUS)
 		{
 			return true;
 		}
@@ -111,36 +111,30 @@ public:
 		return false;
 	}
 	
-	void hitBy(CSphere& ball) 
+	void hitBy(CSphere& ball)                      // ball이 내가 치는 공, this가 맞출 공
 	{ 
 		if (hasIntersected(ball))
 		{
-			//this->hit_count++;                                // 충돌했을 경우 추가 !
+			D3DXVECTOR3 positionVector(this->center_x - ball.center_x, this->center_y, this->center_z - ball.center_z);		// 위치벡터
+			D3DXVec3Normalize(&positionVector, &positionVector);									// 단위벡터로 전환(방향벡터)
 
+			double gap = M_RADIUS - (sqrt(pow(this->center_x - ball.center_x, 2) + pow(this->center_z - ball.center_z, 2)) / 2);	// 공이 겹쳐지는 정도
 
-			D3DXVECTOR2 ballToThis(center_x - ball.center_x, center_z - ball.center_z);		//ball의 중심으로부터 this의 중심까지의 위치벡터
+			this->setCenter(this->center_x + (gap * positionVector.x), this->center_y, this->center_z + (gap * positionVector.z));  // 겹친부분만큼 뒤로 이동
+			ball.setCenter(ball.center_x - (gap * positionVector.x), ball.center_y, ball.center_z - (gap * positionVector.z));      // 반대로 적용
 
-			D3DXVec2Normalize(&ballToThis, &ballToThis);									//단위벡터로 전환
-			double gap = M_RADIUS - (sqrt(pow(center_x - ball.center_x, 2) + pow(center_z - ball.center_z, 2)) / 2);	//공을 움직여야 하는 거리를 구함
+			D3DXVECTOR2 this_velocity(this->m_velocity_x, this->m_velocity_z);				// this의 속도벡터
+			D3DXVECTOR2 ball_velocity(ball.m_velocity_x, ball.m_velocity_z);		// ball의 속도벡터
 
-			setCenter(center_x + (gap * ballToThis.x), center_y, center_z + (gap * ballToThis.y));						//겹친부분만큼 뒤로 이동
-			ball.setCenter(ball.center_x - (gap * ballToThis.x), ball.center_y, ball.center_z - (gap * ballToThis.y));
+			D3DXVECTOR2 positionVector_perp(-positionVector.z, positionVector.x);				// 법선벡터
+			D3DXVECTOR2 D2_positionVector(positionVector.x, positionVector.z);                  // 2차원 위치벡터
 
-			D3DXVECTOR2 this_vector(m_velocity_x, m_velocity_z);				//this의 속도벡터
-			D3DXVECTOR2 ball_vector(ball.m_velocity_x, ball.m_velocity_z);		//ball의 속도벡터
+			this_velocity = D3DXVec2Dot(&this_velocity, &positionVector_perp) * positionVector_perp + D3DXVec2Dot(&ball_velocity, &D2_positionVector) * D2_positionVector;
+			ball_velocity = D3DXVec2Dot(&this_velocity, &D2_positionVector) * D2_positionVector + D3DXVec2Dot(&ball_velocity, &positionVector_perp) * positionVector_perp;
 
-			D3DXVECTOR2 ballToThis_perpend(-ballToThis.y, ballToThis.x);				//ballToThis의 수직벡터
-
-			D3DXVECTOR2 this_vector_f;													//this의 나중 속도벡터
-			D3DXVECTOR2 ball_vector_f;													//ball의 나중 속도벡터
-
-			this_vector_f = D3DXVec2Dot(&this_vector, &ballToThis_perpend) * ballToThis_perpend + D3DXVec2Dot(&ball_vector, &ballToThis) * ballToThis;
-			ball_vector_f = D3DXVec2Dot(&this_vector, &ballToThis) * ballToThis + D3DXVec2Dot(&ball_vector, &ballToThis_perpend) * ballToThis_perpend;
-
-			setPower(this_vector_f.x, this_vector_f.y);
-			ball.setPower(ball_vector_f.x, ball_vector_f.y);
+			this->setPower(this_velocity.x, this_velocity.y);
+			ball.setPower(ball_velocity.x, ball_velocity.y);
 		}
-		// Insert your code here.
 	}
 
 	void ballUpdate(float timeDiff) 
@@ -289,7 +283,6 @@ public:
 			}
 		}
 		
-		// Insert your code here.
 		return false;
 	}
 
