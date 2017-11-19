@@ -120,8 +120,8 @@ public:
 
 			double gap = M_RADIUS - (sqrt(pow(this->center_x - ball.center_x, 2) + pow(this->center_z - ball.center_z, 2)) / 2);	// 공이 겹쳐지는 정도
 
-			this->setCenter(this->center_x + (gap * positionVector.x), this->center_y, this->center_z + (gap * positionVector.z));  // 겹친부분만큼 뒤로 이동
-			ball.setCenter(ball.center_x - (gap * positionVector.x), ball.center_y, ball.center_z - (gap * positionVector.z));      // 반대로 적용
+			this->setCenter(this->center_x + (gap * positionVector.x), this->center_y, this->center_z + (gap * positionVector.z));  // 충돌 후 위치 이동시키는 부분
+			ball.setCenter(ball.center_x - (gap * positionVector.x), ball.center_y, ball.center_z - (gap * positionVector.z));      
 
 			D3DXVECTOR2 this_velocity(this->m_velocity_x, this->m_velocity_z);				// this의 속도벡터
 			D3DXVECTOR2 ball_velocity(ball.m_velocity_x, ball.m_velocity_z);		// ball의 속도벡터
@@ -313,7 +313,7 @@ public:
 		}
 	}    
 
-	int CWall::Sign(double velocity)
+	int Sign(double velocity)
 	{
 		if (velocity >= 0)
 		{
