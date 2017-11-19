@@ -265,12 +265,12 @@ public:
 		m_pBoundMesh->DrawSubset(0);
     }
 	
-	bool hasIntersected(CSphere& ball) 
+	bool hasIntersected(CSphere& ball)                   // ball은 내가 칠 공, this는 벽
 	{
 		D3DXVECTOR3 moving = ball.getCenter();
-		if (m_width > m_depth)
+		if (this->m_width > this->m_depth)
 		{
-			if (abs(moving.z - this->m_z)<M_RADIUS + 0.06f)
+			if (abs(moving.z - this->m_z) <= M_RADIUS + 0.06f)
 			{
 				return true;
 			}
@@ -288,39 +288,37 @@ public:
 
 	void hitBy(CSphere& ball) 
 	{
-		double vx, vz;
-		double tangent;
-		double gap;
-		D3DXVECTOR3 position = ball.getCenter();
+		if (hasIntersected(ball))
+		{
 
-		if (m_width > m_depth) {
+			D3DXVECTOR2 ball_velocity(ball.getVelocity_X(), ball.getVelocity_Z());
+			D3DXVECTOR3 position = ball.getCenter();
+			double tangent = abs(ball_velocity.y / ball_velocity.x);
+			double gap;
 
-		}
+			if (this->m_width > this->m_depth)
+			{
+				gap = M_RADIUS + 0.06f - abs(position.z - this->m_z);                       // 공과 벽이 겹쳐지는 정도
 
-		if (hasIntersected(ball)) {
-
-			vx = ball.getVelocity_X();
-			vz = ball.getVelocity_Z();
-			tangent = abs(vz / vx);
-
-			if (m_width > m_depth) {
-				gap = M_RADIUS + 0.06f - abs(position.z - m_z);
-
-				ball.setCenter(position.x - gap / tangent * getSign(vx), (float)M_RADIUS, position.z - gap * getSign(vz));
-				ball.setPower(ball.getVelocity_X(), -ball.getVelocity_Z());
+				ball.setCenter(position.x - gap / tangent * Sign(ball_velocity.x), position.y, position.z - gap * Sign(ball_velocity.y));
+				ball.setPower(ball_velocity.x, -ball_velocity.y);
 			}
-			else {
-				gap = M_RADIUS + 0.06f - abs(position.x - m_x);
+			else
+			{
+				gap = M_RADIUS + 0.06f - abs(position.x - this->m_x);
 
-				ball.setCenter(position.x - gap * getSign(vx), (float)M_RADIUS, position.z - gap * tangent * getSign(vz));
-				ball.setPower(-ball.getVelocity_X(), ball.getVelocity_Z());
+				ball.setCenter(position.x - gap * Sign(ball_velocity.x), position.y, position.z - gap * tangent * Sign(ball_velocity.y));
+				ball.setPower(-ball_velocity.x, ball_velocity.y);
 			}
 		}
 	}    
 
-	int CWall::getSign(double num) {
-		if (num >= 0)
+	int CWall::Sign(double velocity)
+	{
+		if (velocity >= 0)
+		{
 			return 1;
+		}
 
 		return -1;
 	}
